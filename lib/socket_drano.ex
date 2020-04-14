@@ -164,11 +164,11 @@ defmodule SocketDrano do
       {nil, _sockets} ->
         {:noreply, state}
 
-      {{endpoint, id, start}, sockets} ->
+      {{endpoint, start}, sockets} ->
         :telemetry.execute(
           [:socket_drano, :monitor, :stop],
           %{duration: System.monotonic_time() - start},
-          %{endpoint: endpoint, id: id}
+          %{endpoint: endpoint}
         )
 
         {:noreply, %{state | sockets: sockets, socket_count: state.socket_count - 1}}
@@ -228,7 +228,7 @@ defmodule SocketDrano do
     end)
   end
 
-  defp drain_socket({pid, {endpoint, id, start}}) do
+  defp drain_socket({pid, {endpoint, start}}) do
     Process.sleep(jitter())
 
     send(pid, %Phoenix.Socket.Broadcast{event: "disconnect"})
@@ -236,7 +236,7 @@ defmodule SocketDrano do
     :telemetry.execute(
       [:socket_drano, :monitor, :stop],
       %{duration: System.monotonic_time() - start},
-      %{endpoint: endpoint, id: id}
+      %{endpoint: endpoint}
     )
   end
 
