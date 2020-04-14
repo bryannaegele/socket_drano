@@ -116,6 +116,7 @@ defmodule SocketDrano do
     :ok = validate_opts!(opts)
 
     :telemetry.attach(:drano_channel_connect, [:phoenix, :channel_joined], &handle_event/4, %{})
+    :persistent_term.put({:socket_drano, :draining}, false)
 
     Process.flag(:trap_exit, true)
 
@@ -179,8 +180,13 @@ defmodule SocketDrano do
   end
 
   def terminate(_reason, state) do
+    :persistent_term.put({:socket_drano, :draining}, true)
     drain_sockets(state.strategy, state.sockets, state.socket_count)
     drain(state.refs, state.drain_check_interval)
+  end
+
+  def draining? do
+    :persistent_term.get({:socket_drano, :draining})
   end
 
   def handle_event(
