@@ -193,7 +193,7 @@ defmodule SocketDrano do
     :persistent_term.get({:socket_drano, :draining})
   end
 
-  def state do
+  def socket_count do
     GenServer.call(__MODULE__, :socket_count)
   end
 
