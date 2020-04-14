@@ -179,6 +179,10 @@ defmodule SocketDrano do
     {:stop, reason, state}
   end
 
+  def handle_call(:socket_count, _from, state) do
+    {:reply, state.socket_count, state}
+  end
+
   def terminate(_reason, state) do
     :persistent_term.put({:socket_drano, :draining}, true)
     drain_sockets(state.strategy, state.sockets, state.socket_count)
@@ -187,6 +191,10 @@ defmodule SocketDrano do
 
   def draining? do
     :persistent_term.get({:socket_drano, :draining})
+  end
+
+  def state do
+    GenServer.call(__MODULE__, :socket_count)
   end
 
   def handle_event(
