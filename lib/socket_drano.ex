@@ -37,9 +37,12 @@ defmodule SocketDrano do
     * `:refs` - A list of refs to drain. `:all` is also supported and will drain all cowboy
       listeners, including those started by means other than `Plug.Cowboy`. Required
 
-    * `:shutdown` - How long to wait for connections to drain.
+    * `:shutdown_delay` - How long to wait for connections to drain.
       This number should match the time provided to Plug.Cowboy.Drainer
       Defaults to 5000ms.
+
+    * `:drain_check_interval` - How frequently ranch should check for
+      all connections to have drained.
 
     * `:strategy` - Strategy to drain the sockets. The percentage
       and time should resolve to 100% of connections being drained
@@ -118,6 +121,11 @@ defmodule SocketDrano do
     :telemetry.attach(:drano_channel_connect, [:phoenix, :channel_joined], &handle_event/4, %{})
     :persistent_term.put({:socket_drano, :draining}, false)
 
+    :drano_signal_handler.init(
+      shutdown_delay: opts[:shutdown_delay],
+      callback: {__MODULE__, :start_draining, []}
+    )
+
     Process.flag(:trap_exit, true)
 
     {:ok,
@@ -183,10 +191,15 @@ defmodule SocketDrano do
     {:reply, state.socket_count, state}
   end
 
-  def terminate(_reason, state) do
+  def handle_call(:start_draining, state) do
     :persistent_term.put({:socket_drano, :draining}, true)
     drain_sockets(state.strategy, state.sockets, state.socket_count)
     drain(state.refs, state.drain_check_interval)
+    {:reply, :ok, state}
+  end
+
+  def start_draining do
+    GenServer.call(__MODULE__, :start_draining)
   end
 
   def draining? do
@@ -312,7 +325,7 @@ defmodule SocketDrano do
       strategy: {:percentage, 25, 100},
       name: __MODULE__,
       drain_check_interval: 1000,
-      shutdown: 5000
+      shutdown_delay: 5000
     ]
   end
 end
