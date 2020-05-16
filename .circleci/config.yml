@@ -51,18 +51,13 @@ workflows:
   build_and_test:
     jobs:
       - socket_drano/build_and_test:
-          name: "1.10-otp-23"
-          elixir: "1.10.3"
-          otp: "23"
-          codecov_flag: "1_10_otp23"
-      - socket_drano/build_and_test:
           name: "1.10-otp-22"
-          elixir: "1.10.3"
+          elixir: "1.10.0"
           otp: "22"
           codecov_flag: "1_10_otp21"
       - socket_drano/build_and_test:
           name: "1.10-otp-21"
-          elixir: "1.10.3"
+          elixir: "1.10.0"
           otp: "21"
           codecov_flag: "1_10_otp21"
       - socket_drano/build_and_test:
