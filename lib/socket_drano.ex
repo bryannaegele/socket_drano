@@ -30,6 +30,11 @@ defmodule SocketDrano do
   explicitly exposed in Phoenix APIs. This could cease working if that internal function
   were to change, but it should not break.**
 
+  ## Usage
+
+  If you run into issues in your test or development environment, you can set the `shutdown_delay`
+  to a low value, such as `0` in non-production environments.
+
   ## Options
 
   The following options can be given to the child spec:
