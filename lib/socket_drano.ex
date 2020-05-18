@@ -16,9 +16,8 @@ defmodule SocketDrano do
   this is most effective when used in combination with your load balancer removing the container
   from the available pool.
 
-  It should be placed _after_ your Endpoint. On `terminate`, SocketDrano will spawn non-blocking processes
-  to disconnect monitored socket connections and exit promptly to allow `Plug.Cowboy.Drainer` to
-  do its thing.
+  On `start_draining`, SocketDrano will spawn non-blocking processes to disconnect monitored
+  socket connections and exit promptly to allow  to do its thing.
 
   Note: This library does not solve the issue of rebalancing of sockets. That's a tougher
   issue and highly dependent on your load-balancing strategy and infra.
@@ -43,7 +42,8 @@ defmodule SocketDrano do
       listeners, including those started by means other than `Plug.Cowboy`. Required
 
     * `:shutdown_delay` - How long to wait for connections to drain.
-      This number should match the time provided to Plug.Cowboy.Drainer
+      This number should not exceed the max time before a sigkill is sent by your container
+      orchestration settings.
       Defaults to 5000ms.
 
     * `:drain_check_interval` - How frequently ranch should check for
@@ -126,7 +126,7 @@ defmodule SocketDrano do
     :telemetry.attach(:drano_channel_connect, [:phoenix, :channel_joined], &handle_event/4, %{})
     :persistent_term.put({:socket_drano, :draining}, false)
 
-    :drano_signal_handler.init(
+    :drano_signal_handler.setup(
       shutdown_delay: opts[:shutdown_delay],
       callback: {__MODULE__, :start_draining, []}
     )
