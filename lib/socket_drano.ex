@@ -177,11 +177,11 @@ defmodule SocketDrano do
       {nil, _sockets} ->
         {:noreply, state}
 
-      {{endpoint, id, start}, sockets} ->
+      {{endpoint, start}, sockets} ->
         :telemetry.execute(
           [:socket_drano, :monitor, :stop],
           %{duration: System.monotonic_time() - start},
-          %{endpoint: endpoint, id: id}
+          %{endpoint: endpoint}
         )
 
         {:noreply, %{state | sockets: sockets, socket_count: state.socket_count - 1}}
@@ -197,9 +197,13 @@ defmodule SocketDrano do
   end
 
   def handle_call(:start_draining, state) do
+    Logger.info("Starting to drain #{state.socket_count} sockets")
+
     :persistent_term.put({:socket_drano, :draining}, true)
+
     drain_sockets(state.strategy, state.sockets, state.socket_count)
     drain(state.refs, state.drain_check_interval)
+
     {:reply, :ok, state}
   end
 
@@ -241,6 +245,8 @@ defmodule SocketDrano do
   defp drain_socket_batch(batch, delay) do
     Process.sleep(delay)
 
+    Logger.info("Draining socket batch after #{delay}ms batch_size:=#{length(batch)}")
+
     Enum.each(batch, fn socket ->
       spawn(fn -> drain_socket(socket) end)
     end)
@@ -271,6 +277,8 @@ defmodule SocketDrano do
   end
 
   defp suspend_listener(ref) do
+    Logger.info("Suspending ranch listener #{inspect(ref)}")
+
     :ranch.suspend_listener(ref) == :ok
   end
 
