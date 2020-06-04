@@ -7,7 +7,7 @@ defmodule SocketDrano do
   timeout periods are reached, especially if they have a heartbeat to keep alive. This library
   handles both in a single dep to keep things simple.
 
-  In order to gracefully shed Phoenix Sockets, it's necessary to explicitly close these sockets.
+  In order to gracefully shed Phoenix Sockets, it's necessary to explicitly close them.
   This is useful in scenarios where a container receives a sigterm during a deployment or scaling
   down and you want to avoid a thundering herd on your other containers.
 
@@ -158,7 +158,7 @@ defmodule SocketDrano do
       :telemetry.execute(
         [:socket_drano, :monitor, :start],
         %{start_time: System.system_time()},
-        %{endpoint: endpoint}
+        %{endpoint: endpoint, pid: pid}
       )
 
       next_state = put_socket(pid, endpoint, state)
@@ -196,7 +196,7 @@ defmodule SocketDrano do
     {:reply, state.socket_count, state}
   end
 
-  def handle_call(:start_draining, state) do
+  def handle_call(:start_draining, _from, state) do
     Logger.info("Starting to drain #{state.socket_count} sockets")
 
     :persistent_term.put({:socket_drano, :draining}, true)
@@ -233,26 +233,28 @@ defmodule SocketDrano do
   defp drain_sockets(_strategy, sockets, _count) when sockets === %{}, do: :ok
 
   defp drain_sockets({:percentage, amount, time}, sockets, count) do
-    batch_sizes = ceil(count / amount)
+    batch_sizes = ceil(count * amount / 100)
+
+    Logger.info("Draining #{count} sockets in batches of #{batch_sizes} every #{time}ms")
 
     Enum.chunk_every(sockets, batch_sizes)
     |> Enum.with_index()
     |> Enum.each(fn {batch, idx} ->
-      spawn(fn -> drain_socket_batch(batch, idx * time) end)
+      spawn(fn -> drain_socket_batch(batch, idx, idx * time) end)
     end)
   end
 
-  defp drain_socket_batch(batch, delay) do
+  defp drain_socket_batch(batch, batch_id, delay) do
     Process.sleep(delay)
 
-    Logger.info("Draining socket batch after #{delay}ms batch_size:=#{length(batch)}")
+    Logger.info("Draining socket batch #{batch_id} after #{delay}ms batch_size:=#{length(batch)}")
 
     Enum.each(batch, fn socket ->
       spawn(fn -> drain_socket(socket) end)
     end)
   end
 
-  defp drain_socket({pid, {endpoint, id, start}}) do
+  defp drain_socket({pid, {endpoint, start}}) do
     Process.sleep(jitter())
 
     send(pid, %Phoenix.Socket.Broadcast{event: "disconnect"})
@@ -260,7 +262,7 @@ defmodule SocketDrano do
     :telemetry.execute(
       [:socket_drano, :monitor, :stop],
       %{duration: System.monotonic_time() - start},
-      %{endpoint: endpoint, id: id}
+      %{endpoint: endpoint, pid: pid}
     )
   end
 
