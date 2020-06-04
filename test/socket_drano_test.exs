@@ -50,4 +50,79 @@ defmodule SocketDranoTest do
              refs: [MyApp.Endpoint.HTTP, MyApp.Endpoint.HTTPS]
            ) == spec2
   end
+
+  test "sockets are monitored and shed" do
+    Application.ensure_started(:telemetry)
+
+    :telemetry.attach(
+      "monitor_start",
+      [:socket_drano, :monitor, :start],
+      &__MODULE__.handle_event/4,
+      %{pid: self()}
+    )
+
+    :telemetry.attach(
+      "monitor_stop",
+      [:socket_drano, :monitor, :stop],
+      &__MODULE__.handle_event/4,
+      %{pid: self()}
+    )
+
+    spec = SocketDrano.child_spec(refs: [], shutdown_delay: 400)
+    start_supervised!(spec)
+    disconnects_pid = spawn_link(fn -> disconnects([]) end)
+
+    refute SocketDrano.draining?()
+
+    sockets =
+      Enum.map(1..1000, fn id ->
+        spawn_link(fn -> start_socket_process(id, disconnects_pid) end)
+        id
+      end)
+
+    Process.sleep(100)
+
+    assert SocketDrano.socket_count() == 1000
+
+    SocketDrano.start_draining()
+
+    assert SocketDrano.draining?()
+
+    Process.sleep(500)
+
+    send(disconnects_pid, {:get_ids, self()})
+
+    receive do
+      {:disconnected_ids, ids} ->
+        assert Enum.sort(ids) == Enum.sort(sockets)
+    after
+      1000 ->
+        flunk()
+    end
+  end
+
+  def start_socket_process(id, monitor_pid) do
+    :telemetry.execute([:phoenix, :channel_joined], %{}, %{
+      socket: %{transport: :websocket, transport_pid: self(), endpoint: __MODULE__}
+    })
+
+    receive do
+      %Phoenix.Socket.Broadcast{event: "disconnect"} ->
+        send(monitor_pid, {:disconnect, id})
+    end
+  end
+
+  def disconnects(ids) do
+    receive do
+      {:disconnect, id} ->
+        disconnects([id | ids])
+
+      {:get_ids, caller} ->
+        send(caller, {:disconnected_ids, ids})
+    end
+  end
+
+  def handle_event(event, measurements, meta, config) do
+    send(config.pid, {:event, event, measurements, meta, config})
+  end
 end
