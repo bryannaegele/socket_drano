@@ -36,8 +36,8 @@ handle_event({sigterm, test}, {_Delay, {M,F,A}} = State) ->
     {ok, State};
 handle_event(sigterm, {Delay, {M,F,A}} = State) ->
     logger:info("SIGTERM received. Draining and then stopping in ~p ms", [Delay]),
-    erlang:apply(M,F,A),
     erlang:send_after(Delay, self(), stop),
+    erlang:apply(M,F,A),
     {ok, State};
 handle_event(_SignalMsg, S) ->
     {ok, S}.

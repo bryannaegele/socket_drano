@@ -68,7 +68,7 @@ defmodule SocketDranoTest do
       %{pid: self()}
     )
 
-    spec = SocketDrano.child_spec(refs: [], shutdown_delay: 400)
+    spec = SocketDrano.child_spec(refs: [], shutdown_delay: 10_000)
     start_supervised!(spec)
     disconnects_pid = spawn_link(fn -> disconnects([]) end)
 
@@ -86,9 +86,9 @@ defmodule SocketDranoTest do
 
     SocketDrano.start_draining()
 
-    assert SocketDrano.draining?()
-
     Process.sleep(500)
+
+    assert SocketDrano.draining?()
 
     send(disconnects_pid, {:get_ids, self()})
 
@@ -96,7 +96,7 @@ defmodule SocketDranoTest do
       {:disconnected_ids, ids} ->
         assert Enum.sort(ids) == Enum.sort(sockets)
     after
-      1000 ->
+      10000 ->
         flunk()
     end
   end
