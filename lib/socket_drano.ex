@@ -34,6 +34,9 @@ defmodule SocketDrano do
   If you run into issues in your test or development environment, you can set the `shutdown_delay`
   to a low value, such as `0` in non-production environments.
 
+  If you are using a shell script to start your application, be sure that it isn't trapping
+  OS signals. [Sigterm Propagation](http://veithen.io/2014/11/16/sigterm-propagation.html)
+
   ## Options
 
   The following options can be given to the child spec:
@@ -128,7 +131,7 @@ defmodule SocketDrano do
 
     :drano_signal_handler.setup(
       shutdown_delay: opts[:shutdown_delay],
-      callback: {__MODULE__, :start_draining, []}
+      callback: {__MODULE__, :start_draining, [opts[:shutdown_delay]]}
     )
 
     Process.flag(:trap_exit, true)
@@ -207,8 +210,8 @@ defmodule SocketDrano do
     {:reply, :ok, state}
   end
 
-  def start_draining do
-    GenServer.call(__MODULE__, :start_draining)
+  def start_draining(timeout \\ 5000) do
+    GenServer.call(__MODULE__, :start_draining, timeout)
   end
 
   def draining? do
