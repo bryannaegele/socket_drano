@@ -169,6 +169,17 @@ defmodule SocketDrano do
     end
   end
 
+  def handle_cast(:start_draining, state) do
+    Logger.info("Starting to drain #{state.socket_count} sockets")
+
+    :persistent_term.put({:socket_drano, :draining}, true)
+
+    drain_sockets(state.strategy, state.sockets, state.socket_count)
+    drain(state.refs, state.drain_check_interval)
+
+    {:noreply, state}
+  end
+
   def handle_cast(_, state) do
     {:noreply, state}
   end
@@ -199,19 +210,8 @@ defmodule SocketDrano do
     {:reply, state.socket_count, state}
   end
 
-  def handle_call(:start_draining, _from, state) do
-    Logger.info("Starting to drain #{state.socket_count} sockets")
-
-    :persistent_term.put({:socket_drano, :draining}, true)
-
-    drain_sockets(state.strategy, state.sockets, state.socket_count)
-    drain(state.refs, state.drain_check_interval)
-
-    {:reply, :ok, state}
-  end
-
-  def start_draining(timeout \\ 5000) do
-    GenServer.call(__MODULE__, :start_draining, timeout)
+  def start_draining() do
+    GenServer.cast(__MODULE__, :start_draining)
   end
 
   def draining? do
