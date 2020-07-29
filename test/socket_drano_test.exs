@@ -68,6 +68,8 @@ defmodule SocketDranoTest do
       %{pid: self()}
     )
 
+    assert SocketDrano.socket_count() == :not_running
+
     spec = SocketDrano.child_spec(refs: [], shutdown_delay: 10_000)
     start_supervised!(spec)
     disconnects_pid = spawn_link(fn -> disconnects([]) end)

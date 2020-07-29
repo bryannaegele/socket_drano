@@ -131,7 +131,7 @@ defmodule SocketDrano do
 
     :drano_signal_handler.setup(
       shutdown_delay: opts[:shutdown_delay],
-      callback: {__MODULE__, :start_draining, [opts[:shutdown_delay]]}
+      callback: {__MODULE__, :start_draining, []}
     )
 
     Process.flag(:trap_exit, true)
@@ -219,7 +219,11 @@ defmodule SocketDrano do
   end
 
   def socket_count do
-    GenServer.call(__MODULE__, :socket_count)
+    if GenServer.whereis(__MODULE__) do
+      GenServer.call(__MODULE__, :socket_count)
+    else
+      :not_running
+    end
   end
 
   def handle_event(
