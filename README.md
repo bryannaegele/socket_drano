@@ -20,7 +20,7 @@ by adding `socket_drano` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:socket_drano, "~> 0.3.2"}
+    {:socket_drano, "~> 0.4.0"}
   ]
 end
 ```
