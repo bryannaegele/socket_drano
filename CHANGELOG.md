@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0
+
+### Changes
+
+* Support telemetry 1.0.0
+* Update supported Elixir version to match `persistent_term` availability
+
 ## 0.4.0
 
 ### Fixes
