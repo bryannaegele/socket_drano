@@ -324,9 +324,7 @@ defmodule SocketDrano do
 
   defp validate_strategy!(term) do
     raise ArgumentError,
-          "expected strategy to be a valid strategy, such as {:percentage, 10, 250}, got #{
-            inspect(term)
-          }"
+          "expected strategy to be a valid strategy, such as {:percentage, 10, 250}, got #{inspect(term)}"
   end
 
   defp validate_refs!(:all), do: :ok
