@@ -60,8 +60,8 @@ defmodule SocketDrano.MixProject do
     [
       {:phoenix, ">= 1.4.7", optional: true},
       {:ranch, ">= 1.7.0", optional: true},
-      {:telemetry, "~> 0.4", optional: true},
-      {:ex_doc, "~> 0.21", only: [:dev, :docs]}
+      {:telemetry, "~> 0.4 or ~> 1.0", optional: true},
+      {:ex_doc, "~> 0.25", only: [:dev, :docs]}
     ]
   end
 end
