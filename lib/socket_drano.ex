@@ -126,7 +126,13 @@ defmodule SocketDrano do
     opts = ensure_opts(opts)
     :ok = validate_opts!(opts)
 
-    :telemetry.attach(:drano_channel_connect, [:phoenix, :channel_joined], &handle_event/4, %{})
+    :telemetry.attach(
+      :drano_channel_connect,
+      [:phoenix, :channel_joined],
+      &__MODULE__.handle_event/4,
+      %{}
+    )
+
     :persistent_term.put({:socket_drano, :draining}, false)
 
     :drano_signal_handler.setup(
