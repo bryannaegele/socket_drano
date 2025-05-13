@@ -16,7 +16,7 @@ jobs:
       - uses: erlef/setup-beam@v1
         with:
           version-type: strict
-          otp-version: 27.3.4.10
+          otp-version: 27.3.4
           elixir-version: 1.18.3
           rebar3-version: 3.22.0
       - run: mix format --check-formatted
@@ -29,7 +29,7 @@ jobs:
       - uses: erlef/setup-beam@v1
         with:
           version-type: strict
-          otp-version: 27.3.4.10
+          otp-version: 27.3.4
           elixir-version: 1.18.3
           rebar3-version: 3.22.0
       - run: mix deps.get
