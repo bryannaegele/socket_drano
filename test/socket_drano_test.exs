@@ -2,6 +2,12 @@ defmodule SocketDranoTest do
   use ExUnit.Case
   doctest SocketDrano
 
+  setup do
+    # Detach the Phoenix.Logger handler for [:phoenix, :channel_joined]
+    :telemetry.detach({Phoenix.Logger, [:phoenix, :channel_joined]})
+    :ok
+  end
+
   test "it starts" do
     spec = %{
       id: SocketDrano,
@@ -104,9 +110,17 @@ defmodule SocketDranoTest do
   end
 
   def start_socket_process(id, monitor_pid) do
-    :telemetry.execute([:phoenix, :channel_joined], %{}, %{
-      socket: %{transport: :websocket, transport_pid: self(), endpoint: __MODULE__}
-    })
+    socket = %Phoenix.Socket{
+      transport: :websocket,
+      transport_pid: self(),
+      endpoint: __MODULE__,
+      channel: __MODULE__,
+      channel_pid: self(),
+      topic: "room:lobby",
+      serializer: Phoenix.Socket.V2.JSONSerializer
+    }
+
+    :telemetry.execute([:phoenix, :channel_joined], %{}, %{socket: socket})
 
     receive do
       %Phoenix.Socket.Broadcast{event: "disconnect"} ->

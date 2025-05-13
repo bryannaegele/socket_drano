@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.0
+
+### Changes
+
+* update telemetry handler reference
+
 ## 0.5.0
 
 ### Changes
