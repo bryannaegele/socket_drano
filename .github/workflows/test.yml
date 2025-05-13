@@ -22,7 +22,6 @@ jobs:
       - run: mix format --check-formatted
 
   test:
-    needs: test-matrix
     runs-on: ubuntu-latest
     name: Test
     steps:
