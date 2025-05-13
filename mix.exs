@@ -1,13 +1,13 @@
 defmodule SocketDrano.MixProject do
   use Mix.Project
 
-  @version "0.5.0"
+  @version "0.6.0"
 
   def project do
     [
       app: :socket_drano,
       version: "#{@version}",
-      elixir: "~> 1.10",
+      elixir: "~> 1.14",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       preferred_cli_env: preferred_cli_env(),
