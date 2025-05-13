@@ -50,7 +50,7 @@ defmodule SocketDrano.MixProject do
   defp package do
     [
       maintainers: ["Bryan Naegele"],
-      licenses: ["Apache 2.0"],
+      licenses: ["Apache-2.0"],
       links: %{"GitHub" => "https://github.com/bryannaegele/socket_drano"}
     ]
   end
